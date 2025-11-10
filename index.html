@@ -13,7 +13,7 @@
       padding: 20px;
     }
     h1 { color: #58a6ff; }
-    ul { list-style: none; padding-left: 0; }
+    ul { list-style: none; padding-left: 10px; }
     li { margin-bottom: 6px; }
     a {
       color: #58a6ff;
@@ -34,20 +34,35 @@
     <h1>📁 HandsOn Day 10 - Responsive & Custom Widgets</h1>
     <p><b>Refita Yunie Samhuri</b></p>
     <hr>
-    <h3>📂 Klik Folder untuk Melihat File:</h3>
-    <ul>
-      <li><a href="adaptive/">adaptive/</a></li>
-      <li><a href="android/">android/</a></li>
-      <li><a href="custom_widgets/">custom_widgets/</a></li>
-      <li><a href="ios/">ios/</a></li>
-      <li><a href="lib/">lib/</a></li>
-      <li><a href="responsive/">responsive/</a></li>
-      <li><a href="test/">test/</a></li>
-      <li><a href="web/">web/</a></li>
-      <li><a href="pubspec.yaml">pubspec.yaml</a></li>
-      <li><a href="README.md">README.md</a></li>
-    </ul>
-    <p><i>Semua folder dan file di atas dapat diklik untuk melihat isi project.</i></p>
+    <h3>📂 Semua File & Folder di Repository:</h3>
+    <ul id="file-list">Loading...</ul>
   </div>
+
+  <script>
+    async function loadRepo() {
+      const repo = "refitaaaa/HandsOn_day10_RefitaYunie";
+      const apiUrl = `https://api.github.com/repos/${repo}/contents/`;
+      const container = document.getElementById("file-list");
+
+      async function fetchDir(url, indent = 0) {
+        const res = await fetch(url);
+        const data = await res.json();
+        let html = "";
+        for (const item of data) {
+          if (item.type === "dir") {
+            html += `<li style="margin-left:${indent}px;">📂 <a href="${item.html_url}" target="_blank">${item.name}/</a></li>`;
+            html += await fetchDir(item.url, indent + 20);
+          } else {
+            html += `<li style="margin-left:${indent}px;">📄 <a href="${item.html_url}" target="_blank">${item.name}</a></li>`;
+          }
+        }
+        return html;
+      }
+
+      container.innerHTML = await fetchDir(apiUrl);
+    }
+
+    loadRepo();
+  </script>
 </body>
 </html>
