@@ -1,68 +1,176 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HandsOn Day 10 - Refita Yunie</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0d1117;
-      color: #c9d1d9;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 { color: #58a6ff; }
-    ul { list-style: none; padding-left: 10px; }
-    li { margin-bottom: 6px; }
-    a {
-      color: #58a6ff;
-      text-decoration: none;
-      font-weight: bold;
-    }
-    a:hover { text-decoration: underline; }
-    .container {
-      background: #161b22;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px rgba(88,166,255,0.2);
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>HandsOn Day 10 - Refita Yunie</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    margin: 0;
+    padding: 20px;
+  }
+  h1 {
+    color: #58a6ff;
+  }
+  ul {
+    list-style: none;
+    padding-left: 10px;
+  }
+  li {
+    margin-bottom: 6px;
+    cursor: pointer;
+  }
+  .folder {
+    color: #58a6ff;
+    font-weight: bold;
+  }
+  .file {
+    color: #a5d6ff;
+  }
+  .folder:hover,
+  .file:hover {
+    text-decoration: underline;
+  }
+  .container {
+    background: #161b22;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(88, 166, 255, 0.2);
+    max-width: 900px;
+    margin: auto;
+  }
+  .content {
+    background: #0d1117;
+    border: 1px solid #58a6ff;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 20px;
+    font-family: monospace;
+    white-space: pre-wrap;
+    overflow-x: auto;
+    max-height: 500px;
+  }
+</style>
 </head>
 <body>
-  <div class="container">
-    <h1>📁 HandsOn Day 10 - Responsive & Custom Widgets</h1>
-    <p><b>Refita Yunie Samhuri</b></p>
-    <hr>
-    <h3>📂 Semua File & Folder di Repository:</h3>
-    <ul id="file-list">Loading...</ul>
-  </div>
+<div class="container">
+  <h1>📁 HandsOn Day 10 - Responsive & Custom Widgets</h1>
+  <p><b>Refita Yunie Samhuri</b></p>
+  <hr />
+  <h3>📂 Semua File & Folder di Repository:</h3>
+  <ul id="file-list">Loading...</ul>
 
-  <script>
-    async function loadRepo() {
-      const repo = "refitaaaa/HandsOn_day10_RefitaYunie";
-      const apiUrl = `https://api.github.com/repos/${repo}/contents/`;
-      const container = document.getElementById("file-list");
+  <h3>📄 Isi File Dart:</h3>
+  <pre id="file-content" class="content">Klik file .dart untuk melihat isi.</pre>
+</div>
 
-      async function fetchDir(url, indent = 0) {
-        const res = await fetch(url);
-        const data = await res.json();
-        let html = "";
-        for (const item of data) {
-          if (item.type === "dir") {
-            html += `<li style="margin-left:${indent}px;">📂 <a href="${item.html_url}" target="_blank">${item.name}/</a></li>`;
-            html += await fetchDir(item.url, indent + 20);
-          } else {
-            html += `<li style="margin-left:${indent}px;">📄 <a href="${item.html_url}" target="_blank">${item.name}</a></li>`;
-          }
-        }
-        return html;
+<script>
+  const repo = "refitaaaa/HandsOn_day10_RefitaYunie";
+  const apiBaseUrl = `https://api.github.com/repos/${repo}/contents/`;
+
+  const fileListEl = document.getElementById("file-list");
+  const fileContentEl = document.getElementById("file-content");
+
+  // Fungsi fetch folder dan menampilkan nested list
+  async function fetchDir(url, indent = 0) {
+    const res = await fetch(url);
+    if (!res.ok) {
+      return `<li style="margin-left:${indent}px; color: red;">Gagal memuat folder</li>`;
+    }
+    const data = await res.json();
+    let html = "";
+    for (const item of data) {
+      if (item.type === "dir") {
+        // Folder bisa di klik untuk expand/collapse
+        html += `<li style="margin-left:${indent}px;" class="folder" data-url="${item.url}">📂 ${item.name}/</li>`;
+      } else if (item.name.endsWith(".dart")) {
+        // File dart bisa di klik untuk lihat isi
+        html += `<li style="margin-left:${indent}px;" class="file" data-url="${item.url}">📄 ${item.name}</li>`;
       }
+    }
+    return html;
+  }
 
-      container.innerHTML = await fetchDir(apiUrl);
+  // Load root folder
+  async function loadRoot() {
+    fileListEl.innerHTML = "Loading...";
+    const res = await fetch(apiBaseUrl);
+    if (!res.ok) {
+      fileListEl.innerHTML = "Gagal memuat repository.";
+      return;
+    }
+    const data = await res.json();
+
+    // Render root folder (include non-dart files also optional)
+    let html = "";
+    for (const item of data) {
+      if (item.type === "dir") {
+        html += `<li class="folder" data-url="${item.url}">📂 ${item.name}/</li>`;
+      } else if (item.name.endsWith(".dart")) {
+        html += `<li class="file" data-url="${item.url}">📄 ${item.name}</li>`;
+      }
     }
 
-    loadRepo();
-  </script>
+    fileListEl.innerHTML = html;
+  }
+
+  // Event click handling untuk expand folder dan tampilkan isi file
+  fileListEl.addEventListener("click", async (e) => {
+    const target = e.target;
+    if (target.classList.contains("folder")) {
+      const url = target.getAttribute("data-url");
+      const isExpanded = target.getAttribute("data-expanded");
+
+      if (isExpanded === "true") {
+        // Collapse
+        let next = target.nextElementSibling;
+        while (next && next.classList.contains("child-of-" + target.getAttribute("data-url"))) {
+          const toRemove = next;
+          next = next.nextElementSibling;
+          toRemove.remove();
+        }
+        target.setAttribute("data-expanded", "false");
+        target.textContent = "📂 " + target.textContent.replace(/^📂 /, "").replace(/\/$/, "") + "/";
+      } else {
+        // Expand - fetch folder
+        const res = await fetch(url);
+        if (!res.ok) {
+          alert("Gagal memuat folder.");
+          return;
+        }
+        const data = await res.json();
+        let insertHtml = "";
+        for (const item of data) {
+          if (item.type === "dir") {
+            insertHtml += `<li class="folder child-of-${url}" data-url="${item.url}" style="margin-left:20px;">📂 ${item.name}/</li>`;
+          } else if (item.name.endsWith(".dart")) {
+            insertHtml += `<li class="file child-of-${url}" data-url="${item.url}" style="margin-left:20px;">📄 ${item.name}</li>`;
+          }
+        }
+        target.insertAdjacentHTML("afterend", insertHtml);
+        target.setAttribute("data-expanded", "true");
+        target.textContent = "📂 " + target.textContent.replace(/^📂 /, "").replace(/\/$/, "") + " ▼";
+      }
+    } else if (target.classList.contains("file")) {
+      const fileUrl = target.getAttribute("data-url");
+      // Fetch isi file dart (GitHub API response content sudah base64 encoded)
+
+      const res = await fetch(fileUrl);
+      if (!res.ok) {
+        alert("Gagal memuat file.");
+        return;
+      }
+      const data = await res.json();
+      const contentEncoded = data.content;
+      const content = atob(contentEncoded.replace(/\n/g, ""));
+      fileContentEl.textContent = content;
+    }
+  });
+
+  loadRoot();
+</script>
 </body>
 </html>
